@@ -1,1 +1,1 @@
-web: python telethon_cleaner/app.py
+web: python app.py
