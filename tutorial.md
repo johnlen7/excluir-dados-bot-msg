@@ -8,6 +8,15 @@ Pré-requisitos
 - API ID / API HASH do Telegram (crie em https://my.telegram.org/apps).
 - Opcional: uma String Session já gerada (evita login por código repetido).
 
+Como criar API ID e API HASH (passo a passo)
+1. Acesse https://my.telegram.org e clique em "Sign in".
+2. Insira o seu número de telefone com DDI (ex: +5511999999999) — use a mesma conta que pretende usar no painel.
+3. O site vai enviar um código para o seu aplicativo Telegram (no celular ou desktop). Abra o app Telegram, copie o código e cole no site para confirmar o login.
+4. Depois de logado, clique em "API development tools" ou "Apps".
+5. Preencha os campos solicitados (app title, short name e descrição curta) e clique para criar a aplicação.
+6. O site exibirá seu "App api_id" (um número) e "App api_hash" (uma string). Anote esses valores — eles são obrigatórios para o painel.
+7. Observação: o código enviado pelo my.telegram.org expira rapidamente; se o tempo estourar, solicite um novo código.
+
 Resumo dos passos
 1. Conectar o GitHub ao Railway e criar um novo projeto a partir do repo.
 2. Configurar o root do projeto / comando de start e variáveis de ambiente.
