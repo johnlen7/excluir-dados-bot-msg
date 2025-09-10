@@ -93,12 +93,14 @@
   <input name="chat" placeholder="-1001234567890, @meugrupo, https://t.me/meugrupo ou Nome do Grupo" required />
       <div class="row">
         <div>
-          <label>Desde (ISO8601)</label>
-          <input name="since" placeholder="2024-01-01T00:00:00Z" />
+          <label>Desde (data e hora)</label>
+          <input name="since" type="datetime-local" step="1" />
+          <div class="muted" style="font-size:12px">Use o calendário para escolher data e hora (fuso local será usado).</div>
         </div>
         <div>
-          <label>Até (ISO8601, opcional)</label>
-          <input name="until" placeholder="2025-01-01T00:00:00Z" />
+          <label>Até (data e hora, opcional)</label>
+          <input name="until" type="datetime-local" step="1" />
+          <div class="muted" style="font-size:12px">Opcional — deixe vazio para não limitar acima.</div>
         </div>
       </div>
       <div class="row">

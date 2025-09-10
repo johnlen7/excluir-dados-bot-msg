@@ -57,7 +57,15 @@ def parse_iso(dt: str) -> Optional[datetime]:
     try:
         if dt.endswith("Z"):
             dt = dt[:-1] + "+00:00"
-        return datetime.fromisoformat(dt)
+        parsed = datetime.fromisoformat(dt)
+        # if naive (no tzinfo), assume local timezone and convert to aware UTC
+        if parsed.tzinfo is None:
+            try:
+                local_tz = datetime.now().astimezone().tzinfo
+                parsed = parsed.replace(tzinfo=local_tz)
+            except Exception:
+                pass
+        return parsed
     except Exception:
         return None
 
