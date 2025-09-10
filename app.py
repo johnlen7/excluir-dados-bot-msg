@@ -210,8 +210,8 @@ async def cleanup(
             STATE.last_error = "Faça login antes de limpar."
             return render("index.html", code_sent=STATE.code_sent, authorized=STATE.authorized, last_error=STATE.last_error, session_str=STATE.session_str, summary=summary)
 
-    client = await ensure_client(STATE.api_id, STATE.api_hash, STATE.session_str)
-    entity = await resolve_chat_entity(client, chat)
+        client = await ensure_client(STATE.api_id, STATE.api_hash, STATE.session_str)
+        entity = await resolve_chat_entity(client, chat)
         s = parse_iso(since)
         u = parse_iso(until)
         try:
