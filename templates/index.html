@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Telethon Cleaner</title>
+  <style>
+    body { background:#0b1220; color:#e2e8f0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial, sans-serif; max-width: 900px; margin: 24px auto; padding: 0 16px; }
+    h1, h2 { color:#f1f5f9; }
+    label { display:block; margin: 8px 0 4px; color:#cbd5e1 }
+    input, select { width:100%; background:#0b1220; color:#e2e8f0; border:1px solid #374151; border-radius:8px; padding:10px; }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .btn { background:#6366f1; color:#fff; border:none; padding:9px 14px; border-radius:8px; cursor:pointer; }
+    .btn:hover { filter: brightness(1.1); }
+    .danger { background:#ef4444; }
+    .card { background:#0b1018; border:1px solid #374151; border-radius:10px; padding:16px; margin:14px 0; }
+    .muted { color:#94a3b8 }
+    .alert { padding:10px; border-radius:8px; margin:10px 0; }
+    .alert-error { background:#221; border:1px solid #ef4444; color:#fecaca }
+    .alert-ok { background:#121; border:1px solid #10b981; color:#d1fae5 }
+  </style>
+  <script>
+    function copySession() {
+      const el = document.getElementById('session');
+      if (el && el.value) { navigator.clipboard.writeText(el.value); alert('Session copiada. Guarde com segurança.'); }
+    }
+  </script>
+</head>
+<body>
+  <h1>🧹 Telethon Cleaner</h1>
+  <p class="muted">Use uma única vez para limpar mensagens de serviço antigas (entrada/saída) de um grupo. Não há autenticação neste painel — use com responsabilidade e desligue após o uso.</p>
+
+  {% if last_error %}
+  <div class="alert alert-error">{{ last_error }}</div>
+  {% endif %}
+
+  <div class="card">
+    <h2>1) Login</h2>
+    {% if not code_sent and not authorized %}
+    <form method="post" action="/send_code">
+      <div class="row">
+        <div>
+          <label>API ID</label>
+          <input name="api_id" placeholder="TG_API_ID" required />
+        </div>
+        <div>
+          <label>API HASH</label>
+          <input name="api_hash" placeholder="TG_API_HASH" required />
+        </div>
+      </div>
+      <label>Telefone (com DDI)</label>
+      <input name="phone" placeholder="+5511999999999" required />
+      <div style="margin-top:10px">
+        <button class="btn" type="submit">Enviar código</button>
+      </div>
+    </form>
+    {% elif code_sent and not authorized %}
+    <form method="post" action="/confirm_code">
+      <label>Código recebido no Telegram</label>
+      <input name="code" placeholder="12345" required />
+      <label>Senha 2FA (se houver)</label>
+      <input name="password" type="password" placeholder="••••••" />
+      <div style="margin-top:10px">
+        <button class="btn" type="submit">Confirmar login</button>
+        <form method="post" action="/reset" style="display:inline-block;margin-left:8px"><button class="btn danger" type="submit">Reset</button></form>
+      </div>
+    </form>
+    {% else %}
+    <div class="alert alert-ok">Login OK</div>
+    <label>String Session (guarde com segurança)</label>
+    <input id="session" value="{{ session_str or '' }}" readonly />
+    <button class="btn" onclick="copySession()" style="margin-top:8px">Copiar Session</button>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>2) Limpeza</h2>
+    <form method="post" action="/cleanup">
+      <label>Chat (ID -100... ou @username)</label>
+      <input name="chat" placeholder="-1001234567890 ou @meugrupo" required />
+      <div class="row">
+        <div>
+          <label>Desde (ISO8601)</label>
+          <input name="since" placeholder="2024-01-01T00:00:00Z" />
+        </div>
+        <div>
+          <label>Até (ISO8601, opcional)</label>
+          <input name="until" placeholder="2025-01-01T00:00:00Z" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Limite (max msgs a escanear)</label>
+          <input name="limit" value="5000" />
+        </div>
+        <div>
+          <label>Batch (apagadas por lote)</label>
+          <input name="batch" value="100" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Dry-run</label>
+          <select name="dry_run"><option value="1">Sim</option><option value="0">Não</option></select>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <button class="btn" type="submit">Executar</button>
+        <form method="post" action="/reset" style="display:inline-block;margin-left:8px"><button class="btn danger" type="submit">Reset</button></form>
+      </div>
+    </form>
+
+    {% if summary %}
+    <div class="card" style="margin-top:12px">
+      <h3>Resultado</h3>
+      <p>Matched: {{ summary.matched }}</p>
+      <p>Attempted: {{ summary.attempted }}</p>
+      <p>Deleted OK: {{ summary.deleted_ok }}</p>
+      <p>Errors: {{ summary.errors }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Ajuda</h2>
+    <p class="muted">Consiga seu <strong>API ID</strong> e <strong>API HASH</strong> em <a href="https://my.telegram.org/apps" target="_blank">my.telegram.org/apps</a>.</p>
+    <p class="muted">A conta usada deve ser admin do grupo e ter permissão para <em>apagar mensagens</em>.</p>
+  </div>
+</body>
+</html>
