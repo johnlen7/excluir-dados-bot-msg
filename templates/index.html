@@ -56,6 +56,15 @@
         <button class="btn" type="submit">Enviar código</button>
       </div>
     </form>
+    <form method="post" action="/import_session" style="margin-top:8px">
+      <input name="api_id" placeholder="TG_API_ID" required style="display:none" />
+      <input name="api_hash" placeholder="TG_API_HASH" required style="display:none" />
+      <label style="margin-top:8px">Importar String Session diretamente (cole e clique)</label>
+      <input name="session_input" placeholder="Cole a String Session aqui" />
+      <div style="margin-top:8px"><button class="btn" type="submit">Importar Session</button>
+        <form method="post" action="/clear_session" style="display:inline-block;margin-left:8px"><button class="btn danger" type="submit">Limpar Session</button></form>
+      </div>
+    </form>
     {% elif code_sent and not authorized %}
     <form method="post" action="/confirm_code">
       <label>Código recebido no Telegram</label>

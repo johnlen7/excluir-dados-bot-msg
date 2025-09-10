@@ -186,6 +186,52 @@ async def send_code(
         return RedirectResponse("/", status_code=303)
 
 
+@app.post("/import_session")
+async def import_session(api_id: str = Form(...), api_hash: str = Form(...), session_input: str = Form("")):
+    try:
+        STATE.api_id = int(api_id)
+        STATE.api_hash = api_hash.strip()
+        STATE.last_error = None
+        if not session_input:
+            STATE.last_error = "Cole a String Session para importar."
+            return RedirectResponse("/", status_code=303)
+        STATE.session_str = session_input.strip()
+        try:
+            client = await ensure_client(STATE.api_id, STATE.api_hash, STATE.session_str)
+            if await client.is_user_authorized():
+                STATE.authorized = True
+                STATE.session_str = client.session.save()
+                STATE.code_sent = False
+                return RedirectResponse("/", status_code=303)
+            else:
+                STATE.last_error = "Session importada, mas conta não autorizada."
+                return RedirectResponse("/", status_code=303)
+        except Exception as e:
+            STATE.last_error = f"Falha ao usar String Session: {e}"
+            return RedirectResponse("/", status_code=303)
+    except Exception as e:
+        STATE.last_error = f"Erro ao importar session: {e}"
+        return RedirectResponse("/", status_code=303)
+
+
+@app.post("/clear_session")
+async def clear_session():
+    try:
+        if STATE.client:
+            try:
+                await STATE.client.disconnect()
+            except Exception:
+                pass
+        # Limpa somente o estado em memória; variáveis de ambiente não são alteradas aqui
+        STATE.client = None
+        STATE.session_str = None
+        STATE.authorized = False
+        STATE.code_sent = False
+        STATE.last_error = None
+    finally:
+        return RedirectResponse("/", status_code=303)
+
+
 @app.post("/confirm_code")
 async def confirm_code(code: str = Form(""), password: str = Form("")):
     try:
