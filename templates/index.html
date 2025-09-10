@@ -57,8 +57,10 @@
       </div>
     </form>
     <form method="post" action="/import_session" style="margin-top:8px">
-      <input name="api_id" placeholder="TG_API_ID" required style="display:none" />
-      <input name="api_hash" placeholder="TG_API_HASH" required style="display:none" />
+      <label>API ID (opcional se já preenchido)</label>
+      <input name="api_id_import" placeholder="TG_API_ID" />
+      <label>API HASH (opcional se já preenchido)</label>
+      <input name="api_hash_import" placeholder="TG_API_HASH" />
       <label style="margin-top:8px">Importar String Session diretamente (cole e clique)</label>
       <input name="session_input" placeholder="Cole a String Session aqui" />
       <div style="margin-top:8px"><button class="btn" type="submit">Importar Session</button>

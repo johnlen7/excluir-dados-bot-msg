@@ -187,11 +187,32 @@ async def send_code(
 
 
 @app.post("/import_session")
-async def import_session(api_id: str = Form(...), api_hash: str = Form(...), session_input: str = Form("")):
+async def import_session(api_id_import: str = Form(""), api_hash_import: str = Form(""), session_input: str = Form("")):
     try:
-        STATE.api_id = int(api_id)
-        STATE.api_hash = api_hash.strip()
         STATE.last_error = None
+        # determine API credentials: prefer already provided STATE, else use form inputs
+        api_id_val = None
+        api_hash_val = None
+        if STATE.api_id and STATE.api_hash:
+            api_id_val = STATE.api_id
+            api_hash_val = STATE.api_hash
+        else:
+            if api_id_import:
+                try:
+                    api_id_val = int(api_id_import)
+                except Exception:
+                    STATE.last_error = "API ID fornecido inválido."
+                    return RedirectResponse("/", status_code=303)
+            if api_hash_import:
+                api_hash_val = api_hash_import.strip()
+
+        if not api_id_val or not api_hash_val:
+            STATE.last_error = "Forneça API ID e API HASH (ou preencha o formulário de login primeiro)."
+            return RedirectResponse("/", status_code=303)
+
+        STATE.api_id = int(api_id_val)
+        STATE.api_hash = api_hash_val
+
         if not session_input:
             STATE.last_error = "Cole a String Session para importar."
             return RedirectResponse("/", status_code=303)
