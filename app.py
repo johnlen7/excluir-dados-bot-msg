@@ -40,6 +40,10 @@ class State:
 
 
 STATE = State()
+# Se houver uma session serializada em env, carregue para reutilizar entre reinícios
+env_session = os.getenv("SESSION_STRING")
+if env_session:
+    STATE.session_str = env_session
 
 
 def render(name: str, **ctx) -> HTMLResponse:
@@ -150,12 +154,29 @@ async def index(request: Request):
 
 
 @app.post("/send_code")
-async def send_code(api_id: str = Form(...), api_hash: str = Form(...), phone: str = Form(...)):
+async def send_code(
+    api_id: str = Form(...), api_hash: str = Form(...), phone: str = Form(...), session_input: str = Form("")
+):
     try:
         STATE.api_id = int(api_id)
         STATE.api_hash = api_hash.strip()
         STATE.phone = phone.strip()
         STATE.last_error = None
+
+        # Se o usuário colou uma String Session, tente reutilizar sem enviar código
+        if session_input:
+            STATE.session_str = session_input.strip()
+            try:
+                client = await ensure_client(STATE.api_id, STATE.api_hash, STATE.session_str)
+                if await client.is_user_authorized():
+                    STATE.authorized = True
+                    STATE.session_str = client.session.save()
+                    STATE.code_sent = False
+                    return RedirectResponse("/", status_code=303)
+                # se não autorizado, vamos enviar código abaixo
+            except Exception as e:
+                STATE.last_error = f"Session inválida ou falha ao conectar: {e}"
+
         client = await ensure_client(STATE.api_id, STATE.api_hash, STATE.session_str)
         await client.send_code_request(STATE.phone)
         STATE.code_sent = True
