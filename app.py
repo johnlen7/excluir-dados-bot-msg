@@ -1,5 +1,6 @@
 import os
 import asyncio
+import re
 from datetime import datetime
 from typing import Optional, Dict, Any
 
@@ -13,6 +14,7 @@ from telethon import TelegramClient
 from telethon.sessions import StringSession
 from telethon.tl import types as tl
 from telethon.errors import SessionPasswordNeededError, PhoneCodeInvalidError
+from telethon.utils import resolve_id
 
 
 app = FastAPI(title="Telethon Cleaner")
@@ -65,6 +67,66 @@ def is_service_join_leave(msg) -> bool:
             tl.MessageActionChatDeleteUser,
         ))
     return False
+
+
+async def resolve_chat_entity(client: TelegramClient, chat: str):
+    """Resolve diversas formas de entrada de chat para uma entity do Telethon.
+
+    Aceita:
+    - @username
+    - Links t.me/@user, t.me/user, t.me/c/<id>/...
+    - ID numérico (ex.: -1001234567890)
+    - Nome/título do grupo (busca entre diálogos)
+    """
+    s = (chat or "").strip()
+    if not s:
+        raise ValueError("Chat vazio.")
+
+    lower = s.lower()
+    # Links t.me
+    if "t.me/" in lower:
+        try:
+            path = s.split("t.me/", 1)[1].strip("/")
+            if path.startswith("c/"):
+                digits = ''.join(ch for ch in path[2:] if ch.isdigit())
+                if not digits:
+                    raise ValueError("Link t.me/c inválido")
+                s = f"-100{digits}"
+            else:
+                username = path.split('/')[0]
+                return await client.get_entity(username)
+        except Exception:
+            pass
+
+    # @username
+    if s.startswith("@"):
+        return await client.get_entity(s[1:])
+
+    # Numérico (inclui -100...)
+    if s.lstrip("-").isdigit():
+        try:
+            pid = int(s)
+            peer_cls, peer_id = resolve_id(pid)
+            peer_obj = peer_cls(peer_id)
+            return await client.get_entity(peer_obj)
+        except Exception:
+            # fallback (user IDs positivos podem resolver direto)
+            return await client.get_entity(int(s))
+
+    # Busca por nome/título nos diálogos
+    s_cf = s.casefold()
+    found = None
+    async for dlg in client.iter_dialogs():
+        name = (dlg.name or "").strip()
+        if name.casefold() == s_cf:
+            found = dlg.entity
+            break
+        if not found and s_cf in name.casefold():
+            found = found or dlg.entity
+    if found:
+        return found
+
+    raise ValueError(f"Não achei chat correspondente a: {chat}")
 
 
 async def ensure_client(api_id: int, api_hash: str, session_str: Optional[str]) -> TelegramClient:
@@ -148,8 +210,8 @@ async def cleanup(
             STATE.last_error = "Faça login antes de limpar."
             return render("index.html", code_sent=STATE.code_sent, authorized=STATE.authorized, last_error=STATE.last_error, session_str=STATE.session_str, summary=summary)
 
-        client = await ensure_client(STATE.api_id, STATE.api_hash, STATE.session_str)
-        entity = await client.get_entity(chat.strip())
+    client = await ensure_client(STATE.api_id, STATE.api_hash, STATE.session_str)
+    entity = await resolve_chat_entity(client, chat)
         s = parse_iso(since)
         u = parse_iso(until)
         try:
